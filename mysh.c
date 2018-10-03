@@ -5,10 +5,6 @@
  *
  */
 #include "mysh.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
 
 #define LINELEN 256
 

@@ -6,6 +6,7 @@
  */
 #include "mysh.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define LINELEN 256
@@ -112,23 +113,34 @@ int parse_args_main(int argc, char **argv)
 int batch_mode(void)
 {
     int i;
-//    for(i = 0; i < num_batch_files ; i++){
-//        printf("Batch file: %s\n",batch_files[i]);
-//
-//        FILE *fptr;
-//        if ((fptr = fopen(batch_files[i],"r")) == NULL){
-//            printf("Error! opening file");
-//
-//            //BREAK FROM EVERYTHING
-//            return(-1);
-//        }
-//
-//        //READ LINES
-//        char *check;
-//        fscanf(fptr,"%s",check);
-//        printf("Word: %s",check);
-//
-//    }
+    for(i = 0; i < num_batch_files ; i++){
+        printf("Looking in file: %s\n",batch_files[i]);
+        /*
+         NOTE:  size_t is an unsigned int
+                ssize_t is a signed int, signed so that it can return a -1
+         */
+        char *line = NULL;
+        size_t len = 0;
+        ssize_t read;
+        
+        
+        FILE *fptr;
+        if ((fptr = fopen(batch_files[i],"r")) == NULL){
+            printf("Error! opening file");
+
+            //BREAK FROM EVERYTHING
+            return(-1);
+        }
+        
+        //READ until EOF
+        while((read = getline(&line,&len,fptr)) != -1){
+            printf("Line %s\n",line);
+        }
+
+        //NOTE: FREE on our own because getline allocates the space
+        free(line);
+        printf("New file\n");
+    }
     /*
      * For each file...
      */

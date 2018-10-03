@@ -188,7 +188,39 @@ int interactive_mode(void)
     do{
         printf("mysh$ ");
         getline(&line,&len,stdin);
-        printf("Input %s",line);
+        
+        //Strip newline
+        if('\n' == line[strlen(line)-1]){
+            line[strlen(line)-1] = '\0';
+        }
+        
+        //TOKENIZE
+        char *token;
+        token = strtok(line," ");
+        if(strcmp(token,"exit")==0){
+
+            //wait for background processes
+            return 0;
+        }else if(strcmp(token,"jobs")==0){
+            printf("<Print out jobs>");
+            return 0;
+        }else if(strcmp(token,"history")==0){
+            //HISTORY
+            return 0;
+        }else if (strcmp(token,"fg")==0){
+            //FG
+            printf("FG");
+        }else if(strcmp(token,"wait")==0){
+            printf("Wait");
+        }
+        while( token != NULL ){
+            printf("Token: %s\n",token);
+            /*
+             NOTE:The first call to strtok must pass the C string to tokenize, and subsequent calls must specify NULL as the first argument, which tells the function to continue tokenizing the string you passed in first.
+             */
+            token = strtok (NULL, " ");
+        }
+        //EXECUTE COMMAND
     }while(1==1);
         /*
          * Read stdin, break out of loop if Ctrl-D

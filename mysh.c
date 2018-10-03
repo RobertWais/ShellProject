@@ -181,7 +181,15 @@ int interactive_mode(void)
         /*
          * Print the prompt
          */
-        
+    
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    do{
+        printf("mysh$ ");
+        getline(&line,&len,stdin);
+        printf("Input %s",line);
+    }while(1==1);
         /*
          * Read stdin, break out of loop if Ctrl-D
          */

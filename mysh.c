@@ -134,6 +134,13 @@ int batch_mode(void)
         
         //READ until EOF
         while((read = getline(&line,&len,fptr)) != -1){
+            
+            printf("Size %lu",strlen(line));
+            if('\n' == line[strlen(line)-1]){
+                line[strlen(line)-1] = '\0';
+            }
+            printf("Size %lu\n",strlen(line));
+            
             printf("Line %s\n",line);
         }
 

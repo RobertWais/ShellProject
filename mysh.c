@@ -135,6 +135,16 @@ int batch_mode(void)
             }
             printf("Line %s\n",line);
             
+            char *token;
+            token = strtok(line," ");
+            while( token != NULL ){
+                printf("Token: %s\n",token);
+                /*
+                 NOTE:The first call to strtok must pass the C string to tokenize, and subsequent calls must specify NULL as the first argument, which tells the function to continue tokenizing the string you passed in first.
+                 */
+                token = strtok (NULL, " ");
+            }
+           
             //PARSE AND EXECUTE
         }
 

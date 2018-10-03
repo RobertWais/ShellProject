@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #define LINELEN 256
 
@@ -208,6 +209,36 @@ int interactive_mode(void)
             //HISTORY
             return 0;
         }else if (strcmp(token,"fg")==0){
+            //TESTING PIDS
+//            pid_t c_pid = 0;
+//            int status = 0;
+//            char *binary = NULL;
+//            char **args = NULL;
+//            binary = strdup("ls"); args = (char **)malloc(
+//                                                          sizeof(char *) * 3); args[0] = strdup(binary);
+//            args[1] = strdup("."); args[2] = NULL;
+//            /* fork a child process */
+//            c_pid = fork();
+//
+//            /* Check for an error */
+//            if( c_pid < 0 ) {
+//                fprintf(stderr,
+//                        "Error: Fork failed!\n");
+//                return -1; }
+//            /* Check if child */
+//            else if( c_pid == 0 ) {
+//                execvp(binary, args);
+//                /* exec does not return on success.
+//                 * If we are here then error out */
+//                fprintf(stderr,
+//                        "Error: Exec failed!\n");
+//                exit(-1);
+//            }
+//            /* Check if parent */
+//            else {
+//                waitpid(c_pid, &status, 0);
+//                printf("Child finished!\n"); }
+            return 0;
             //FG
             printf("FG");
         }else if(strcmp(token,"wait")==0){

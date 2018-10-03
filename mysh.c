@@ -1,10 +1,14 @@
 /*
- * [YOUR NAME HERE]
+ * Robert Wais
  *
  * CS441/541: Project 3
  *
  */
 #include "mysh.h"
+#include <stdio.h>
+#include <string.h>
+
+#define LINELEN 256
 
 int main(int argc, char * argv[]) {
 
@@ -12,7 +16,9 @@ int main(int argc, char * argv[]) {
      * Parse Command line arguments to check if this is an interactive or batch
      * mode run.
      */
-    if( 0 != (ret = parse_args_main(argc, argv)) ) {
+    
+    //( 0 != (ret = parse_args_main(argc, argv)) )
+    if( 0 != (parse_args_main(argc, argv)) ) {
         fprintf(stderr, "Error: Invalid command line!\n");
         return -1;
     }
@@ -25,7 +31,8 @@ int main(int argc, char * argv[]) {
             printf("Batch Mode!\n");
         }
 
-        if( 0 != (ret = batch_mode()) ) {
+//        ( 0 != (ret = batch_mode()) )
+        if( 0 != (batch_mode()) ) {
             fprintf(stderr, "Error: Batch mode returned a failure!\n");
         }
     }
@@ -37,7 +44,8 @@ int main(int argc, char * argv[]) {
             printf("Interactive Mode!\n");
         }
 
-        if( 0 != (ret = interactive_mode()) ) {
+        //(ret = interactive_mode())
+        if( 0 != (interactive_mode()) ) {
             fprintf(stderr, "Error: Interactive mode returned a failure!\n");
         }
     }
@@ -61,11 +69,11 @@ int main(int argc, char * argv[]) {
     /*
      * Cleanup
      */
-    if( NULL != batch_files) {
-        free(batch_files);
-        batch_files = NULL;
-        num_batch_files = 0;
-    }
+//    if( NULL != batch_files) {
+//        free(batch_files);
+//        batch_files = NULL;
+//        num_batch_files = 0;
+//    }
 
     return 0;
 }
@@ -73,6 +81,22 @@ int main(int argc, char * argv[]) {
 int parse_args_main(int argc, char **argv)
 {
 
+    //INTERACTIVE MODE
+    if(argc<2){
+    
+    printf("Argc: %d\n",argc);
+    printf("Agv: %s\n",argv[0]);
+        
+    //BATCH MODE
+    }else{
+        is_batch = TRUE;
+        
+        //FILL argv into batch_files
+        batch_files = &argv[1];
+        num_batch_files = argc - 1;
+        
+    }
+    
     /*
      * If no command line arguments were passed then this is an interactive
      * mode run.
@@ -87,7 +111,24 @@ int parse_args_main(int argc, char **argv)
 
 int batch_mode(void)
 {
-
+    int i;
+//    for(i = 0; i < num_batch_files ; i++){
+//        printf("Batch file: %s\n",batch_files[i]);
+//
+//        FILE *fptr;
+//        if ((fptr = fopen(batch_files[i],"r")) == NULL){
+//            printf("Error! opening file");
+//
+//            //BREAK FROM EVERYTHING
+//            return(-1);
+//        }
+//
+//        //READ LINES
+//        char *check;
+//        fscanf(fptr,"%s",check);
+//        printf("Word: %s",check);
+//
+//    }
     /*
      * For each file...
      */

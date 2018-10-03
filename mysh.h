@@ -52,6 +52,13 @@ typedef struct job_t job_t;
  */
 int is_batch = FALSE;
 
+ /*
+  *Created Past template
+  */
+int is_debug = FALSE;
+int num_batch_files = 0;
+char **batch_files;
+
 /*
  * Counts
  */

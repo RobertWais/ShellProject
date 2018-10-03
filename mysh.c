@@ -318,3 +318,82 @@ int builtin_fg(void) {
 
   return 0;
 }
+
+
+
+/*
+ Job Functions
+ */
+
+struct job_t *jobCreate(char *full_command, int argc, char **argv, int is_background, char *binary){
+    struct job_t *job;
+    job = (struct job_t *)malloc(sizeof(struct job_t));
+    job->full_command = (char *)malloc(sizeof(char)* (strlen(full_command)+1));
+    job->argc = argc;
+    
+    //Allocate memory for each char pointer
+    job->argv = malloc(sizeof(char*) * argc);
+    int i;
+    //Allocate memory for each *char
+    for(i = 0; i<argc ; i++){
+        job->argv[i] = (char *)malloc(sizeof(char)*(strlen(argv[i])+1));
+    }
+    
+    job->is_background = is_background;
+    job->binary = (char *)malloc(sizeof(char)*(strlen(binary)+1));
+    job->binary = binary;
+    return job;
+}
+
+char *jobFullCommand(struct job_t *job) {
+    return (job->full_command);
+}
+
+int jobArgc(struct job_t *job) {
+    return job->argc;
+}
+
+char **jobArgv(struct job_t *job) {
+    return job->argv;
+}
+
+int jobIsBackground(struct job_t *job) {
+    return job->is_background;
+}
+
+char *jobBinary(struct job_t *job) {
+    return job->binary;
+}
+
+/*
+ Node list functions
+ */
+
+struct NodeList *listCreate(){
+    struct NodeList *list = malloc(sizeof(struct NodeList));
+    list->size = 0;
+    list->head=NULL;
+    list->tail=NULL;
+    return list;
+}
+void listAdd(struct NodeList *list, struct job_t *job){
+    //EMPTY LIST
+    if(list->head == NULL){
+        struct Node *onlyElement = malloc(sizeof(struct Node));
+        onlyElement->job = job;
+        onlyElement->next = NULL;
+        list->head = onlyElement;
+        list->tail = onlyElement;
+    //NON-EMPTY-LIST
+    }else{
+        //ADD NODE TO END OF THE LIST
+        struct Node *newTail = malloc(sizeof(struct Node));
+        newTail->job = job;
+        newTail->next = NULL;
+        list->tail = newTail;
+    }
+}
+
+
+
+

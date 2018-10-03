@@ -43,6 +43,23 @@ struct job_t {
 };
 typedef struct job_t job_t;
 
+/*
+ A Node Struct
+ */
+struct Node {
+    struct job_t *job;
+    struct Node *next;
+};
+
+/*
+A Node List
+ */
+struct NodeList{
+    int size;
+    struct Node *head;
+    struct Node *tail;
+};
+
 /******************************
  * Global Variables
  ******************************/
@@ -70,6 +87,23 @@ int total_history = 0;
 /******************************
  * Function declarations
  ******************************/
+
+/*
+ Job Creations/Methods
+ */
+struct job_t *jobCreate(char *full_command, int argc, char **argv, int is_background, char *binary);
+char *jobFullCommand(struct job_t *job);
+int jobArgc(struct job_t *job);
+char **jobArgv(struct job_t *job);
+int jobIsBackground(struct job_t *job);
+char *jobBinary(struct job_t *job);
+
+/*
+ NodeList Creation
+ */
+struct NodeList *listCreate();
+void listAdd(struct NodeList *list, struct job_t *job);
+
 /*
  * Parse command line arguments passed to myshell upon startup.
  *

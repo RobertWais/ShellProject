@@ -84,9 +84,6 @@ int parse_args_main(int argc, char **argv)
 
     //INTERACTIVE MODE
     if(argc<2){
-    
-    printf("Argc: %d\n",argc);
-    printf("Agv: %s\n",argv[0]);
         
     //BATCH MODE
     }else{
@@ -95,7 +92,6 @@ int parse_args_main(int argc, char **argv)
         //FILL argv into batch_files
         batch_files = &argv[1];
         num_batch_files = argc - 1;
-        
     }
     
     /*
@@ -134,19 +130,17 @@ int batch_mode(void)
         
         //READ until EOF
         while((read = getline(&line,&len,fptr)) != -1){
-            
-            printf("Size %lu",strlen(line));
             if('\n' == line[strlen(line)-1]){
                 line[strlen(line)-1] = '\0';
             }
-            printf("Size %lu\n",strlen(line));
-            
             printf("Line %s\n",line);
+            
+            //PARSE AND EXECUTE
         }
 
         //NOTE: FREE on our own because getline allocates the space
         free(line);
-        printf("New file\n");
+        printf("----------Reading New file----------\n");
     }
     /*
      * For each file...

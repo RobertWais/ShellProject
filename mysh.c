@@ -214,8 +214,10 @@ struct NodeList *list = listCreate();
             printf("Wait");
         }else{
             int i=0;
-            char **tempArgs = (char **)malloc(sizeof(char*) * 2);
+            char **tempArgs = (char**)malloc(sizeof(char*) * 1);
             while( token != NULL ){
+                //REALLOC
+                tempArgs=realloc(tempArgs, (sizeof(char*) * (i+2)));
                 printf("Token: %s\n",token);
                 tempArgs[i] = (char *)malloc(sizeof(char)*(strlen(token)+1));
                 tempArgs[i] = token;
@@ -424,7 +426,7 @@ void listHistory(struct NodeList *list){
     }
     int count = 1;
     while(curr != NULL){
-        printf("%d %s %s\n",count,jobBinary(curr->job));
+        printf("%d %s\n",count,jobBinary(curr->job));
         curr = curr->next;
         count++;
     }

@@ -103,6 +103,7 @@ char *jobBinary(struct job_t *job);
  */
 struct NodeList *listCreate();
 void listAdd(struct NodeList *list, struct job_t *job);
+void listHistory(struct NodeList *list);
 
 /*
  * Parse command line arguments passed to myshell upon startup.

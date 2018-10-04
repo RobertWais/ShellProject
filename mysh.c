@@ -176,7 +176,7 @@ int batch_mode(void) {
 }
 
 int interactive_mode(void) {
-
+struct NodeList *list = listCreate();
   //do {
       /*
        * Print the prompt
@@ -206,48 +206,33 @@ int interactive_mode(void) {
             return 0;
         }else if(strcmp(token,"history")==0){
             //HISTORY
-            return 0;
+            listHistory(list);
         }else if (strcmp(token,"fg")==0){
-            //TESTING PIDS
-            //            pid_t c_pid = 0;
-            //            int status = 0;
-            //            char *binary = NULL;
-            //            char **args = NULL;
-            //            binary = strdup("ls"); args = (char **)malloc(
-            //                                                          sizeof(char *) * 3); args[0] = strdup(binary);
-            //            args[1] = strdup("."); args[2] = NULL;
-            //            /* fork a child process */
-            //            c_pid = fork();
-            //
-            //            /* Check for an error */
-            //            if( c_pid < 0 ) {
-            //                fprintf(stderr,
-            //                        "Error: Fork failed!\n");
-            //                return -1; }
-            //            /* Check if child */
-            //            else if( c_pid == 0 ) {
-            //                execvp(binary, args);
-            //                /* exec does not return on success.
-            //                 * If we are here then error out */
-            //                fprintf(stderr,
-            //                        "Error: Exec failed!\n");
-            //                exit(-1);
-            //            }
-            //            /* Check if parent */
-            //            else {
-            //                waitpid(c_pid, &status, 0);
-            //                printf("Child finished!\n"); }
+           
             return 0;
         }else if(strcmp(token,"wait")==0){
             printf("Wait");
+        }else{
+            int i=0;
+            char **tempArgs = (char **)malloc(sizeof(char*) * 2);
+            while( token != NULL ){
+                printf("Token: %s\n",token);
+                tempArgs[i] = (char *)malloc(sizeof(char)*(strlen(token)+1));
+                tempArgs[i] = token;
+                token = strtok (NULL, " ");
+                i++;
+            }
+            
+            //        tempArgs[0] = strdup("ls");
+            //        tempArgs[1] = NULL;
+            struct job_t *job = jobCreate(line, 2,tempArgs,0,tempArgs[0]);
+            listAdd(list,job);
+            launch_job(job);
         }
-        while( token != NULL ){
-            printf("Token: %s\n",token);
-            /*
-             NOTE:The first call to strtok must pass the C string to tokenize, and subsequent calls must specify NULL as the first argument, which tells the function to continue tokenizing the string you passed in first.
-             */
-            token = strtok (NULL, " ");
-        }
+        
+        
+        
+        
         //EXECUTE COMMAND
     }while(1==1);
     /*
@@ -277,7 +262,36 @@ int interactive_mode(void) {
  */
 
 int launch_job(job_t * loc_job) {
-
+    pid_t c_pid = 0;
+    int status = 0;
+    char *binary = jobBinary(loc_job);
+    char **args = jobArgv(loc_job);
+    int i;
+    for(i =0;i<jobArgc(loc_job);i++){
+        printf("Arg: %s\n", args[i]);
+    }
+    /* fork a child process */
+    c_pid = fork();
+    
+    /* Check for an error */
+    if( c_pid < 0 ) {
+        fprintf(stderr,
+                "Error: Fork failed!\n");
+        return -1; }
+    /* Check if child */
+    else if( c_pid == 0 ) {
+        execvp(binary, args);
+        /* exec does not return on success.
+         * If we are here then error out */
+        fprintf(stderr,
+                "Error: Exec failed!\n");
+        exit(-1);
+    }
+    /* Check if parent */
+    else {
+        waitpid(c_pid, &status, 0);
+        //printf("Child finished!\n");
+    }
   /*
    * Display the job
    */
@@ -332,12 +346,14 @@ struct job_t *jobCreate(char *full_command, int argc, char **argv, int is_backgr
     job->argc = argc;
     
     //Allocate memory for each char pointer
-    job->argv = malloc(sizeof(char*) * argc);
-    int i;
-    //Allocate memory for each *char
-    for(i = 0; i<argc ; i++){
-        job->argv[i] = (char *)malloc(sizeof(char)*(strlen(argv[i])+1));
-    }
+    //Already Allocated MEM
+    job->argv = argv;
+//    job->argv = malloc(sizeof(char*) * argc);
+//    int i;
+//    //Allocate memory for each *char
+//    for(i = 0; i<argc ; i++){
+//        job->argv[i] = (char *)malloc(sizeof(char)*(strlen(argv[i])+1));
+//    }
     
     job->is_background = is_background;
     job->binary = (char *)malloc(sizeof(char)*(strlen(binary)+1));
@@ -378,22 +394,43 @@ struct NodeList *listCreate(){
 }
 void listAdd(struct NodeList *list, struct job_t *job){
     //EMPTY LIST
+   
     if(list->head == NULL){
         struct Node *onlyElement = malloc(sizeof(struct Node));
         onlyElement->job = job;
         onlyElement->next = NULL;
         list->head = onlyElement;
         list->tail = onlyElement;
+        list->size++;
     //NON-EMPTY-LIST
     }else{
         //ADD NODE TO END OF THE LIST
         struct Node *newTail = malloc(sizeof(struct Node));
+        struct Node *prevTail = list->tail;
+//        printf("Old: %s",prevTail->job->binary);
         newTail->job = job;
         newTail->next = NULL;
+        prevTail->next = newTail;
         list->tail = newTail;
+        list->size++;
+    }
+     printf("SIZE OF LIST: %d\n",list->size);
+}
+
+void listHistory(struct NodeList *list){
+    struct Node *curr = list->head;
+    if(list->head == NULL){
+        return;
+    }
+    int count = 1;
+    while(curr != NULL){
+        printf("%d %s %s\n",count,jobBinary(curr->job));
+        curr = curr->next;
+        count++;
     }
 }
 
 
-
-
+/*
+ NOTE:The first call to strtok must pass the C string to tokenize, and subsequent calls must specify NULL as the first argument, which tells the function to continue tokenizing the string you passed in first.
+ */

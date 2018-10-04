@@ -104,7 +104,6 @@ int parse_args_main(int argc, char **argv) {
 
 int batch_mode(void) {
     int i;
-    
     for (i = 0; i < num_batch_files; i++) {
         printf("Looking in file: %s\n", batch_files[i]);
         /*
@@ -239,7 +238,9 @@ int interactive_mode(void) {
                     token = strtok (NULL, " ");
                     i++;
                 }
-                struct job_t *job = jobCreate(line, 2,tempArgs,0,tempArgs[0]);
+                tempArgs[i] = NULL;
+                printf("Count: %d",i);
+                struct job_t *job = jobCreate(line, i+1,tempArgs,0,tempArgs[0]);
                 listAdd(list,job);
                 launch_job(job);
                 
@@ -284,6 +285,7 @@ int launch_job(job_t * loc_job) {
     }
     /* Check if parent */
     else {
+        printf("c_pid: %d for: %s \n",c_pid,jobBinary(loc_job));
         waitpid(c_pid, &status, 0);
         //printf("Child finished!\n");
     }

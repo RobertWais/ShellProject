@@ -36,12 +36,6 @@
  */
 
 
-//struct tempJob{
-//    int pid;
-//    int position;
-//    char *full_command;
-//};
-
 struct job_t {
     char * full_command;
     int argc;
@@ -62,10 +56,6 @@ struct Node {
     struct Node *next;
 };
 
-//struct tempNode {
-//    struct tempJob *job;
-//    struct tempNode *next;
-//}
 
 /*
 A Node List
@@ -77,12 +67,7 @@ struct NodeList{
     struct Node *tail;
 };
 
-//struct tempNodeList{
-//    int total;
-//    int actual;
-//    struct Node *head;
-//    struct Node *tail;
-//}
+
 
 /******************************
  * Global Variables
@@ -130,9 +115,6 @@ void setDone(struct job_t *job);
  Temp Job Creations/Methods
  */
 
-//struct tempJob *jobCreate(char *full_command, int position, int pid);
-//int jobPosition(struct tempJob *job);
-//int jobPid(struct tempJob *job);
 /*
  NodeList Creation
  */
@@ -146,10 +128,6 @@ void listJobs(struct NodeList *list);
  TempNode List Creation
  */
 
-//struct tempNodeList *listCreate();
-//void listAdd(struct tempJob *job);
-//void listAll(struct tempJob *job);
-//void listRemove(struct tempJob *job);
 
 /*
  * Parse command line arguments passed to myshell upon startup.

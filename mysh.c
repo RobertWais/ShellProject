@@ -1,3 +1,4 @@
+
 /*
  * Robert Wais, Andrew Smith
  *
@@ -14,6 +15,7 @@ int main(int argc, char * argv[]) {
      * Parse Command line arguments to check if this is an interactive or batch
      * mode run.
      */
+    
     
     //( 0 != (ret = parse_args_main(argc, argv)) )
     if (0 != (parse_args_main(argc, argv))) {
@@ -131,7 +133,7 @@ int batch_mode(void) {
             if ('\n' == line[strlen(line) - 1]) {
                 line[strlen(line) - 1] = '\0';
             }
-            printf("Line %s\n", line);
+            //            printf("Line %s\n", line);
             
             char *token;
             token = strtok(line," ");
@@ -176,11 +178,11 @@ int batch_mode(void) {
 
 int interactive_mode(void) {
     struct NodeList *list = listCreate();
-    
+    struct NodeList *jobs = listCreate();
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    int pass = 0;
+    int background = 0;
     
     do{
         printf("mysh$ ");
@@ -191,6 +193,7 @@ int interactive_mode(void) {
             return 0;
         }
         
+        //Stripping newline
         if('\n' == line[strlen(line)-1]){
             line[strlen(line)-1] = '\0';
         }
@@ -204,8 +207,9 @@ int interactive_mode(void) {
                 //wait for background processes
                 return 0;
             }else if(strcmp(token,"jobs")==0){
-                printf("<Print out jobs>");
-                return 0;
+                //                listJobs(jobs);
+                listJobs(jobs);
+                token = strtok (NULL, " ");
             }else if(strcmp(token,"history")==0){
                 //HISTORY
                 listHistory(list);
@@ -220,30 +224,40 @@ int interactive_mode(void) {
                 int i=0;
                 char **tempArgs = (char**)malloc(sizeof(char*) * 1);
                 while( token != NULL ){
-                    //REALLOC
-                    tempArgs=realloc(tempArgs, (sizeof(char*) * (i+2)));
-                    printf("Token: %s\n",token);
-                    
-                    /*If token == & || token == ; {
-                     break; but part of line will be left
-                     */
+                    //REALLOC'
                     if(strcmp(token,";")==0){
                         //SPLIT
                         token = strtok (NULL, " ");
                         break;
+                    }else if(strcmp(token,"&")==0){
+                        token = strtok (NULL, " ");
+                        background = 1;
+                        break;
                     }
+                    tempArgs=realloc(tempArgs, (sizeof(char*) * (i+2)));
+                    //                    printf("Token: %s\n",token);
+                    
+                    /*If token == & || token == ; {
+                     break; but part of line will be left
+                     */
+                    
                     
                     tempArgs[i] = (char *)malloc(sizeof(char)*(strlen(token)+1));
-                    tempArgs[i] = token;
+                    strcpy(tempArgs[i], token);
                     token = strtok (NULL, " ");
                     i++;
                 }
                 tempArgs[i] = NULL;
-                printf("Count: %d",i);
-                struct job_t *job = jobCreate(line, i+1,tempArgs,0,tempArgs[0]);
-                listAdd(list,job);
-                launch_job(job);
                 
+                struct job_t *job = jobCreate(line, i+1,tempArgs,background,tempArgs[0]);
+                listAdd(list,job);
+                if(jobIsBackground(job)==1){
+                    setPosition(job, jobs->total+1);
+                    listAdd(jobs,job);
+                }
+                launch_job(job,jobs);
+                //RESET BACKGROUND
+                background = 0;
             }
             //vvvvv LINE != NULL vvvvvv
         }
@@ -257,15 +271,11 @@ int interactive_mode(void) {
  * and then call the following functions to execute them
  */
 
-int launch_job(job_t * loc_job) {
+int launch_job(job_t * loc_job, struct NodeList *jobs) {
     pid_t c_pid = 0;
     int status = 0;
     char *binary = jobBinary(loc_job);
     char **args = jobArgv(loc_job);
-    int i;
-    for(i =0;i<jobArgc(loc_job);i++){
-        printf("Arg: %s\n", args[i]);
-    }
     /* fork a child process */
     c_pid = fork();
     
@@ -285,14 +295,21 @@ int launch_job(job_t * loc_job) {
     }
     /* Check if parent */
     else {
-        printf("c_pid: %d for: %s \n",c_pid,jobBinary(loc_job));
-        waitpid(c_pid, &status, 0);
+        //FOREGROUND
+        if(jobIsBackground(loc_job) == 0){
+            waitpid(c_pid, &status, 0);
+        }else{
+            //BACKGROUND
+            setPID(loc_job,c_pid);
+            waitpid(c_pid, &status, WNOHANG);
+            setDone(loc_job);
+        }
+        
         //printf("Child finished!\n");
     }
     /*
      * Display the job
      */
-    
     
     /*
      * Launch the job in either the foreground or background
@@ -356,6 +373,9 @@ struct job_t *jobCreate(char *full_command, int argc, char **argv, int is_backgr
     job->is_background = is_background;
     job->binary = (char *)malloc(sizeof(char)*(strlen(binary)+1));
     strcpy(job->binary,binary);
+    job->pid = 0;
+    job->position = 0;
+    job->running = 1;
     return job;
 }
 
@@ -379,6 +399,20 @@ char *jobBinary(struct job_t *job) {
     return job->binary;
 }
 
+void setPosition(struct job_t *job, int position){
+    job->position = position;
+}
+void setPID(struct job_t *job, int PID){
+    job->pid = PID;
+}
+void setRunning(struct job_t *job){
+    job->running = 1;
+}
+
+void setDone(struct job_t *job){
+    job->running = 0;
+}
+
 /*
  Node list functions
  */
@@ -386,6 +420,7 @@ char *jobBinary(struct job_t *job) {
 struct NodeList *listCreate(){
     struct NodeList *list = malloc(sizeof(struct NodeList));
     list->size = 0;
+    list->total = 0;
     list->head=NULL;
     list->tail=NULL;
     return list;
@@ -397,12 +432,8 @@ void listAdd(struct NodeList *list, struct job_t *job){
         onlyElement->next = NULL;
         list->head = onlyElement;
         list->tail = onlyElement;
-        list->size++;
         //NON-EMPTY-LIST
     }else{
-        struct Node *currHead = list->head;
-        struct job_t *hope=currHead->job;
-        printf("Current head: %s\n",jobBinary(hope));
         //ADD NODE TO END OF THE LIST
         struct Node *newTail = malloc(sizeof(struct Node));
         struct Node *prevTail = list->tail;
@@ -410,14 +441,15 @@ void listAdd(struct NodeList *list, struct job_t *job){
         newTail->next = NULL;
         prevTail->next = newTail;
         list->tail = newTail;
-        list->size++;
     }
-    printf("SIZE OF LIST: %d\n",list->size);
+    list->size++;
+    list->total++;
 }
 
 void listHistory(struct NodeList *list){
     struct Node *curr = list->head;
     if(list->head == NULL){
+        printf("LIST IS NULL\n");
         return;
     }
     int count = 1;
@@ -428,6 +460,63 @@ void listHistory(struct NodeList *list){
     }
 }
 
+void listJobs(struct NodeList *list){
+    int status = 0;
+    int shouldDelete = 0;
+    struct Node *curr = list->head;
+    struct Node *previous = NULL;
+    if(list->head == NULL){
+        return;
+    }
+    while(curr != NULL){
+        if(waitpid(curr->job->pid, &status, WNOHANG)!=0){
+            
+            printf("[%d]\tDone\t",curr->job->position);
+            if(previous == NULL){
+                list->head=curr->next;
+            }else{
+                previous->next = curr->next;
+            }
+            //FREE NODE
+            list->size = list->size - 1;
+        }else{
+            printf("[%d]\tRunning\t",curr->job->position);
+        }
+        
+        int i;
+        
+        for(i = 0;i <curr->job->argc-1; i++){
+            printf(" %s ",curr->job->argv[i]);
+        }
+        printf("\n");
+        
+        previous = curr;
+        curr = curr->next;
+    }
+    
+    if(list->size==0){
+        list->total = 0;
+    }
+}
+
+void listRemove(struct NodeList *list, int pid){
+    struct Node *curr = list->head;
+    struct Node *previous = NULL;
+    int i;
+    for(i = 0; i<list->size; i++){
+        if(curr->job->pid == pid){
+            if(previous == NULL){
+                list->head=curr->next;
+            }else{
+                previous->next = curr->next;
+            }
+            list->size = list->size - 1;
+            break;
+        }
+        previous = curr;
+        curr = curr->next;
+    }
+}
 /*
  NOTE:The first call to strtok must pass the C string to tokenize, and subsequent calls must specify NULL as the first argument, which tells the function to continue tokenizing the string you passed in first.
  */

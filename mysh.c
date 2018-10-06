@@ -462,8 +462,8 @@ void listHistory(struct NodeList *list){
 
 void listJobs(struct NodeList *list){
     int status = 0;
-    int shouldDelete = 0;
     struct Node *curr = list->head;
+    struct Node *temp = NULL;
     struct Node *previous = NULL;
     if(list->head == NULL){
         return;
@@ -477,21 +477,28 @@ void listJobs(struct NodeList *list){
             }else{
                 previous->next = curr->next;
             }
+            //Print out
+            int i;
+            for(i = 0;i <curr->job->argc-1; i++){
+                printf(" %s ",curr->job->argv[i]);
+            }
+            //FREE THE NODE
+            temp = curr;
+            curr=curr->next;
+            free(temp);
             //FREE NODE
             list->size = list->size - 1;
+            printf("\n");
         }else{
             printf("[%d]\tRunning\t",curr->job->position);
+            int i;
+            for(i = 0;i <curr->job->argc-1; i++){
+                printf(" %s ",curr->job->argv[i]);
+            }
+            printf("\n");
+            previous = curr;
+            curr = curr->next;
         }
-        
-        int i;
-        
-        for(i = 0;i <curr->job->argc-1; i++){
-            printf(" %s ",curr->job->argv[i]);
-        }
-        printf("\n");
-        
-        previous = curr;
-        curr = curr->next;
     }
     
     if(list->size==0){

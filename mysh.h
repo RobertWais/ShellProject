@@ -60,7 +60,7 @@ struct Node {
 /*
 A Node List
  */
-struct NodeList{
+struct NodeList {
     int size;
     int total;
     struct Node *head;
@@ -72,7 +72,7 @@ struct NodeList{
 /******************************
  * Global Variables
  ******************************/
- 
+
 /*
  * Interactive or batch mode
  */
@@ -174,7 +174,7 @@ int interactive_mode(void);
  *
  * Returns:
  *   0 on success
- *   Negative value on error 
+ *   Negative value on error
  */
 int launch_job(job_t * loc_job, struct NodeList *jobs);
 
@@ -236,6 +236,8 @@ int builtin_wait(void);
  *   0 on success
  *   Negative value on error
  */
-int builtin_fg(void);
+int builtin_fg(int, struct NodeList *);
+
+int parseLine(char *, char *, struct NodeList *, struct NodeList *);
 
 #endif /* MYSHELL_H */

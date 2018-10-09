@@ -230,8 +230,14 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
         } else if (strcmp(token, "fg") == 0) {
             /* need to take in number for id */
             token = strtok(NULL, " ");
-            builtin_fg((int) token, jobs);
-            token = strtok(NULL, " ");
+            if (token == NULL) {
+                builtin_fg(-1, jobs);
+            } else if (atoi(token) <= 0) {
+                printf("Invalid ID given\n");
+            } else {
+                builtin_fg(atoi(token), jobs);
+                token = strtok(NULL, " ");
+            }
         } else if (strcmp(token, "wait") == 0) {
             return 0;
         } else {
@@ -357,20 +363,24 @@ int builtin_wait(void) {
 
 int builtin_fg(int id, struct NodeList *jobs) {
     if (jobs->head == NULL) {
-        /* error */
+        printf("No jobs in background\n");
         return 0;
     } else {
         struct job_t *job = NULL;
         int status;
 
-        if (id < 0) {
+        if (id == -1) {
             /* no argument means select most recent job */
             job = jobs->tail->job;
         } else {
             int i = 0;
             struct Node *currentNode = jobs->head;
 
-            while (i < id) {
+            while (i < id - 1) {
+                if (currentNode->next == NULL) {
+                    printf("Invalid ID given\n");
+                    return 0;
+                }
                 currentNode = currentNode->next;
                 i++;
             }

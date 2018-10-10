@@ -218,23 +218,70 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
             //wait for background processes
             return 0;
         } else if (strcmp(token, "jobs") == 0) {
-            //                listJobs(jobs);
+            char **tempArgs = (char **) malloc(sizeof(char *) * 2);
+            tempArgs[0] = (char *) malloc(sizeof(char) * (strlen("jobs") + 1));
+            
+            tempArgs[1] = NULL;
+            strcpy(tempArgs[0], "jobs");
+            
+            struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
+            listAdd(list, job);
             listJobs(jobs);
             token = strtok(NULL, " ");
         } else if (strcmp(token, "history") == 0) {
             //HISTORY
+            //ALLOCATE FOR HISTORY - Recent
+            char **tempArgs = (char **) malloc(sizeof(char *) * 2);
+            tempArgs[0] = (char *) malloc(sizeof(char) * (strlen("history") + 1));
+            
+            tempArgs[1] = NULL;
+            strcpy(tempArgs[0], "history");
+            
+            struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
+            listAdd(list, job);
+            //
             listHistory(list);
 
             //READ NEXT
             token = strtok(NULL, " ");
         } else if (strcmp(token, "fg") == 0) {
             /* need to take in number for id */
+            //Alloc for history
+            
+            
+            
             token = strtok(NULL, " ");
             if (token == NULL) {
+                //ALLOCATE FOR HISTORY - Recent
+                char **tempArgs = (char **) malloc(sizeof(char *) * 2);
+                tempArgs[0] = (char *) malloc(sizeof(char) * (strlen("fg") + 1));
+                
+                tempArgs[1] = NULL;
+                strcpy(tempArgs[0], "fg");
+                
+                struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
+                listAdd(list, job);
+                //
+                
+                
+                
+                
                 builtin_fg(-1, jobs);
             } else if (atoi(token) <= 0) {
                 printf("Invalid ID given\n");
             } else {
+                //ALLOCATE FOR HISTORY - Recent
+                char **tempArgs = (char **) malloc(sizeof(char *) * 3);
+                tempArgs[0] = (char *) malloc(sizeof(char) * (strlen("fg") + 1));
+                tempArgs[1] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
+                tempArgs[2] = NULL;
+                strcpy(tempArgs[0], "fg");
+                strcpy(tempArgs[1], token);
+                
+                struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
+                listAdd(list, job);
+                //
+                
                 builtin_fg(atoi(token), jobs);
                 token = strtok(NULL, " ");
             }

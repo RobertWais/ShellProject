@@ -212,8 +212,10 @@ int interactive_mode(void) {
 
 int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *jobs) {
     int background = 0;
+    int reDirect = 0;
 
     while (token != NULL) {
+        reDirect = 0;
         if (strcmp(token, "exit") == 0) {
             //wait for background processes
             return 0;
@@ -263,9 +265,6 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                 listAdd(list, job);
                 //
                 
-                
-                
-                
                 builtin_fg(-1, jobs);
             } else if (atoi(token) <= 0) {
                 printf("Invalid ID given\n");
@@ -300,30 +299,67 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     token = strtok(NULL, " ");
                     background = 1;
                     break;
+                }else if(strcmp(token, ">") == 0 || strcmp(token, "<") == 0 ){
+                    //IF THIS TOKEN isnt file null
+                    printf("Found token </>\n");
+                    tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 3)));
+                    tempArgs[1] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
+                    strcpy(tempArgs[1], token);
+                    token = strtok(NULL, " ");
+                    if(token == NULL){
+                        //DIDNT PASS A FILE
+                        printf("ERROR - NO FILE");
+                        return -1;
+                    }
+
+                    //{Command} '<' {file} - Space for 3
+                    tempArgs[2] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
+                    strcpy(tempArgs[2], token);
+                    token = strtok(NULL, " ");
+                    reDirect = 1;
+                    break;
                 }
                 tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
-                //                    printf("Token: %s\n",token);
-
-                /*If token == & || token == ; {
-                 break; but part of line will be left
-                 */
-
 
                 tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
                 strcpy(tempArgs[i], token);
                 token = strtok(NULL, " ");
                 i++;
             }
-            tempArgs[i] = NULL;
+            if(!reDirect){
+                tempArgs[i] = NULL;
+            }else{
+                tempArgs[3] = NULL;
+            }
+            
 
             struct job_t *job = jobCreate(line, i + 1, tempArgs, background, tempArgs[0]);
+            
+            
             listAdd(list, job);
             if (jobIsBackground(job) == 1) {
                 setPosition(job, jobs->total + 1);
                 listAdd(jobs, job);
             }
-            launch_job(job, jobs);
+            
+            //< or > - FILE REDIRECTION
+            
+            if(reDirect){
+                if(strcmp(tempArgs[1], ">") == 0 || strcmp(tempArgs[1], "<") == 0){
+                    //CALL REDIRECT
+                    launch_job(job, jobs,fileRedirectionInt(job));
+                }else{
+                    launch_job(job, jobs,-1);
+                }
+            }else{
+                 launch_job(job, jobs,-1);
+            }
+        
+            
+            
+            
             //RESET BACKGROUND
+            reDirect = 0;
             background = 0;
         }
         //vvvvv LINE != NULL vvvvvv
@@ -337,11 +373,25 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
  * and then call the following functions to execute them
  */
 
-int launch_job(job_t * loc_job, struct NodeList *jobs) {
+int launch_job(job_t * loc_job, struct NodeList *jobs, int fileDescriptor) {
     pid_t c_pid = 0;
     int status = 0;
     char *binary = jobBinary(loc_job);
     char **args = jobArgv(loc_job);
+    
+    //If we are in file redirection
+    if(fileDescriptor != -1){
+        if(strcmp(loc_job->argv[1],">")==0){
+            int newFileDescriptor = open(loc_job->argv[2],O_WRONLY);
+            dup2(newFileDescriptor,STDOUT_FILENO);
+        }else{
+            int newFileDescriptor = open(loc_job->argv[2],O_RDONLY);
+            dup2(newFileDescriptor,STDIN_FILENO);
+        }
+        
+    }
+    
+    
     /* fork a child process */
     c_pid = fork();
 
@@ -371,6 +421,14 @@ int launch_job(job_t * loc_job, struct NodeList *jobs) {
             setDone(loc_job);
         }
 
+        if(fileDescriptor != -1){
+            if(strcmp(loc_job->argv[1],">")==0){
+                dup2(fileDescriptor,STDOUT_FILENO);
+            }else{
+                dup2(fileDescriptor,STDIN_FILENO);
+            }
+            close(fileDescriptor);
+        }
         //printf("Child finished!\n");
     }
     /*
@@ -437,6 +495,25 @@ int builtin_fg(int id, struct NodeList *jobs) {
 
         return 1;
     }
+}
+
+int fileRedirectionInt(job_t *job){
+    //Redirects output to specified file which is in tempArgs[2]
+    if(strcmp(job->argv[1], ">") == 0){
+        int defaultStdOut;
+        //Save int to the regulat stdOut
+        defaultStdOut = dup(STDOUT_FILENO);
+        return defaultStdOut;
+//        int newFileDescriptor = open(job->argv[2],O_WRONLY);
+//        dup2(newFileDescriptor,STDOUT_FILENO)
+    //Redirects output to specified file which is in tempArgs[2]
+    }else{
+        int defaultStdOut;
+        //Save int to the regulat stdOut
+        defaultStdOut = dup(STDIN_FILENO);
+        return defaultStdOut;
+    }
+    
 }
 
 

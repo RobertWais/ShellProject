@@ -17,6 +17,9 @@
 /* For waitpid */
 #include <sys/wait.h>
 
+//Check
+#include <fcntl.h>
+
 /******************************
  * Defines
  ******************************/
@@ -176,8 +179,10 @@ int interactive_mode(void);
  *   0 on success
  *   Negative value on error
  */
-int launch_job(job_t * loc_job, struct NodeList *jobs);
+int launch_job(job_t * loc_job, struct NodeList *jobs, int fileDescriptor);
 
+//Returns int of old stdin or stdout
+int fileRedirectionInt(job_t *job);
 /*
  * Built-in 'exit' command
  *

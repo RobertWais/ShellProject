@@ -229,7 +229,7 @@ int builtin_history(void);
  *   0 on success
  *   Negative value on error
  */
-int builtin_wait(void);
+int builtin_wait(struct NodeList *);
 
 /*
  * Built-in 'fg' command

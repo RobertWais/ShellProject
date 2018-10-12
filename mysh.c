@@ -183,7 +183,7 @@ int interactive_mode(void) {
 }
 
 int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *jobs) {
-    
+
     int background = 0;
     int redirect = 0;
 
@@ -202,7 +202,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
             struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
             listAdd(list, job);
             total_history++;
-            
+
             listJobs(jobs);
             token = strtok(NULL, " ");
         } else if (strcmp(token, "history") == 0) {
@@ -264,7 +264,8 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
             }
         } else if (strcmp(token, "wait") == 0) {
             total_history++;
-            return 0;
+            builtin_wait(jobs);
+            token = strtok(NULL, " ");
         } else {
             int i = 0;
             char **tempArgs = (char **) malloc(sizeof(char *) * 1);
@@ -299,7 +300,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     //break;
                 }else{
                     tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
-                    
+
                     tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
                     strcpy(tempArgs[i], token);
                     token = strtok(NULL, " ");
@@ -388,7 +389,7 @@ int launch_job(job_t *loc_job, struct NodeList *jobs, int file_descriptor) {
     } else {
         //FOREGROUND
         if (jobIsBackground(loc_job) == 0) {
-            
+
             waitpid(c_pid, &status, 0);
         } else {
             //BACKGROUND
@@ -426,8 +427,21 @@ int builtin_history(void) {
     return 0;
 }
 
-int builtin_wait(void) {
+int builtin_wait(struct NodeList *jobs) {
+    struct Node *current_node = jobs->head;
+    struct job_t *job = NULL;
+    int status;
 
+    current_node = jobs->head;
+    while (current_node != NULL) {
+        printf("looping\n");
+        job = current_node->job;
+        waitpid(job->pid, &status, 0);
+        current_node = current_node->next;
+    }
+
+    job = NULL;
+    current_node = NULL;
     return 0;
 }
 
@@ -444,17 +458,17 @@ int builtin_fg(int id, struct NodeList *jobs) {
             job = jobs->tail->job;
         } else {
             int i = 0;
-            struct Node *currentNode = jobs->head;
+            struct Node *current_node = jobs->head;
 
             while (i < id - 1) {
-                if (currentNode->next == NULL) {
+                if (current_node->next == NULL) {
                     printf("Invalid ID given\n");
                     return 0;
                 }
-                currentNode = currentNode->next;
+                current_node = current_node->next;
                 i++;
             }
-            job = currentNode->job;
+            job = current_node->job;
         }
         waitpid(job->pid, &status, 0);
 
@@ -554,7 +568,7 @@ struct NodeList *listCreate() {
 }
 
 void listAdd(struct NodeList *list, struct job_t *job) {
-    
+
     if (list->head == NULL) {
         struct Node *onlyElement = malloc(sizeof(struct Node));
         onlyElement->job = job;

@@ -141,7 +141,6 @@ int batch_mode(void) {
         free(line);
         line = NULL;
         fptr = NULL;
-        printf("----------Reading New file----------\n");
     }
 
     return 0;
@@ -184,6 +183,7 @@ int interactive_mode(void) {
 }
 
 int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *jobs) {
+    
     int background = 0;
     int redirect = 0;
 
@@ -201,6 +201,8 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
 
             struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
             listAdd(list, job);
+            total_history++;
+            
             listJobs(jobs);
             token = strtok(NULL, " ");
         } else if (strcmp(token, "history") == 0) {
@@ -214,6 +216,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
 
             struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
             listAdd(list, job);
+            total_history++;
             //
             listHistory(list);
 
@@ -236,6 +239,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
 
                 struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
                 listAdd(list, job);
+                total_history++;
                 //
 
                 builtin_fg(-1, jobs);
@@ -252,12 +256,14 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
 
                 struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
                 listAdd(list, job);
+                total_history++;
                 //
 
                 builtin_fg(atoi(token), jobs);
                 token = strtok(NULL, " ");
             }
         } else if (strcmp(token, "wait") == 0) {
+            total_history++;
             return 0;
         } else {
             int i = 0;
@@ -290,14 +296,15 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     strcpy(tempArgs[2], token);
                     token = strtok(NULL, " ");
                     redirect = 1;
-                    break;
+                    //break;
+                }else{
+                    tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
+                    
+                    tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
+                    strcpy(tempArgs[i], token);
+                    token = strtok(NULL, " ");
+                    i++;
                 }
-                tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
-
-                tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
-                strcpy(tempArgs[i], token);
-                token = strtok(NULL, " ");
-                i++;
             }
             if (!redirect) {
                 tempArgs[i] = NULL;
@@ -310,6 +317,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
 
 
             listAdd(list, job);
+            total_history++;
             if (jobIsBackground(job) == 1) {
                 setPosition(job, jobs->total + 1);
                 listAdd(jobs, job);
@@ -347,6 +355,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
  */
 
 int launch_job(job_t *loc_job, struct NodeList *jobs, int file_descriptor) {
+    total_jobs++;
     pid_t c_pid = 0;
     int status = 0;
     char *binary = jobBinary(loc_job);
@@ -379,9 +388,11 @@ int launch_job(job_t *loc_job, struct NodeList *jobs, int file_descriptor) {
     } else {
         //FOREGROUND
         if (jobIsBackground(loc_job) == 0) {
+            
             waitpid(c_pid, &status, 0);
         } else {
             //BACKGROUND
+            total_jobs_bg++;
             setPID(loc_job,c_pid);
             waitpid(c_pid, &status, WNOHANG);
             setDone(loc_job);
@@ -543,6 +554,7 @@ struct NodeList *listCreate() {
 }
 
 void listAdd(struct NodeList *list, struct job_t *job) {
+    
     if (list->head == NULL) {
         struct Node *onlyElement = malloc(sizeof(struct Node));
         onlyElement->job = job;

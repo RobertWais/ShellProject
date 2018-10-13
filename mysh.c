@@ -183,7 +183,6 @@ int interactive_mode(void) {
 }
 
 int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *jobs) {
-
     int background = 0;
     int redirect = 0;
 
@@ -191,6 +190,8 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
         redirect = 0;
         if (strcmp(token, "exit") == 0) {
             //wait for background processes
+            builtin_wait(jobs);
+            total_history++;
             return 0;
         } else if (strcmp(token, "jobs") == 0) {
             char **tempArgs = (char **) malloc(sizeof(char *) * 2);
@@ -225,8 +226,6 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
         } else if (strcmp(token, "fg") == 0) {
             /* need to take in number for id */
             //Alloc for history
-
-
 
             token = strtok(NULL, " ");
             if (token == NULL) {
@@ -276,12 +275,15 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     token = strtok(NULL, " ");
                     break;
                 } else if (strcmp(token, "&") == 0) {
+                    tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
+
+                    tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
+                    strcpy(tempArgs[i], token);
                     token = strtok(NULL, " ");
                     background = 1;
                     break;
                 } else if (strcmp(token, ">") == 0 || strcmp(token, "<") == 0 ) {
                     //IF THIS TOKEN isnt file null
-                    printf("Found token </>\n");
                     tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 3)));
                     tempArgs[1] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
                     strcpy(tempArgs[1], token);
@@ -298,7 +300,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     token = strtok(NULL, " ");
                     redirect = 1;
                     //break;
-                }else{
+                } else {
                     tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
 
                     tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
@@ -313,18 +315,13 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                 tempArgs[3] = NULL;
             }
 
-
             struct job_t *job = jobCreate(line, i + 1, tempArgs, background, tempArgs[0]);
-
-
             listAdd(list, job);
             total_history++;
             if (jobIsBackground(job) == 1) {
                 setPosition(job, jobs->total + 1);
                 listAdd(jobs, job);
             }
-
-            //< or > - FILE redirectION
 
             if (redirect) {
                 if (strcmp(tempArgs[1], ">") == 0 || strcmp(tempArgs[1], "<") == 0) {
@@ -336,9 +333,6 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
             } else {
                  launch_job(job, jobs,-1);
             }
-
-
-
 
             //RESET BACKGROUND
             redirect = 0;
@@ -389,7 +383,6 @@ int launch_job(job_t *loc_job, struct NodeList *jobs, int file_descriptor) {
     } else {
         //FOREGROUND
         if (jobIsBackground(loc_job) == 0) {
-
             waitpid(c_pid, &status, 0);
         } else {
             //BACKGROUND
@@ -430,13 +423,11 @@ int builtin_history(void) {
 int builtin_wait(struct NodeList *jobs) {
     struct Node *current_node = jobs->head;
     struct job_t *job = NULL;
-    int status;
 
     current_node = jobs->head;
     while (current_node != NULL) {
-        printf("looping\n");
         job = current_node->job;
-        waitpid(job->pid, &status, 0);
+        waitpid(job->pid, NULL, 0);
         current_node = current_node->next;
     }
 
@@ -451,7 +442,6 @@ int builtin_fg(int id, struct NodeList *jobs) {
         return 0;
     } else {
         struct job_t *job = NULL;
-        int status;
 
         if (id == -1) {
             /* no argument means select most recent job */
@@ -469,9 +459,11 @@ int builtin_fg(int id, struct NodeList *jobs) {
                 i++;
             }
             job = current_node->job;
+            current_node = NULL;
         }
-        waitpid(job->pid, &status, 0);
+        waitpid(job->pid, NULL, 0);
 
+        job = NULL;
         return 1;
     }
 }
@@ -498,8 +490,7 @@ int fileRedirectionInt(job_t *job) {
  Job Functions
  */
 
-struct job_t *jobCreate(char *full_command, int argc, char **argv,
-        int is_background, char *binary) {
+struct job_t *jobCreate(char *full_command, int argc, char **argv, int is_background, char *binary) {
     struct job_t *job = NULL;
     job = (struct job_t *) malloc(sizeof(struct job_t));
     job->full_command = (char *) malloc(sizeof(char)
@@ -507,9 +498,6 @@ struct job_t *jobCreate(char *full_command, int argc, char **argv,
     strcpy(job->full_command, full_command);
     job->argc = argc;
 
-    //QUESTION???
-    //Allocate memory for each char pointer
-    //Already Allocated MEM
     job->argv = argv;
     job->is_background = is_background;
     job->binary = (char *) malloc(sizeof(char) * (strlen(binary) + 1));
@@ -597,7 +585,18 @@ void listHistory(struct NodeList *list) {
     }
     int count = 1;
     while (curr != NULL) {
-        printf("%d %s\n",count,jobBinary(curr->job));
+        /*TODO: check what is happening with printing jobs
+        printf("%d %s\n",count, jobBinary(curr->job)); */
+        int i;
+        printf("%d ", count);
+        for (i = 0; i < curr->job->argc - 1; i++) {
+            printf("%s ", curr->job->argv[i]);
+        }
+
+        if (curr->job->is_background) {
+            printf("%c", '&');
+        }
+        printf("\n");
         curr = curr->next;
         count++;
     }

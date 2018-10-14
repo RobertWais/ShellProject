@@ -128,9 +128,12 @@ void listRemove(struct NodeList *list, int pid);
 void listJobs(struct NodeList *list);
 
 /*
- TempNode List Creation
+ NodeList deletion
  */
-
+void clearList(struct NodeList *list);
+void jobDelete(struct job_t *job);
+void clearJobs(struct NodeList *list);
+void endAll(struct NodeList *list, struct NodeList *jobs);
 
 /*
  * Parse command line arguments passed to myshell upon startup.

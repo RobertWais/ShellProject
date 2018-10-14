@@ -14,7 +14,6 @@ int main(int argc, char * argv[]) {
      * Parse Command line arguments to check if this is an interactive or batch
      * mode run.
      */
-
     if (0 != (parse_args_main(argc, argv))) {
         fprintf(stderr, "Error: Invalid command line!\n");
         return -1;
@@ -58,13 +57,18 @@ int main(int argc, char * argv[]) {
     /*
      * Display counts
      */
+    
+    
+
+    batch_files = NULL;
+    return 0;
+}
+
+void printOut(){
     printf("-------------------------------\n");
     printf("Total number of jobs               = %d\n", total_jobs);
     printf("Total number of jobs in history    = %d\n", total_history);
     printf("Total number of jobs in background = %d\n", total_jobs_bg);
-
-    batch_files = NULL;
-    return 0;
 }
 
 int parse_args_main(int argc, char **argv) {
@@ -132,6 +136,7 @@ int batch_mode(void) {
             token = strtok(line, " ");
             result = parseLine(token, line, list, jobs);
             if (result == 0) {
+                endAll(list,jobs);
                 return result;
             }
             //PARSE AND EXECUTE
@@ -143,6 +148,7 @@ int batch_mode(void) {
         fptr = NULL;
     }
 
+    endAll(list,jobs);
     return 0;
 }
 
@@ -156,11 +162,12 @@ int interactive_mode(void) {
     int result;
 
     do {
-        printf(PROMPT);
+      printf(PROMPT);
         read = getline(&line, &len, stdin);
 
         //CHECK FOR EOF
         if (read == -1) {
+            endAll(list,jobs);
             return 0;
         }
 
@@ -174,11 +181,13 @@ int interactive_mode(void) {
 
         result = parseLine(token, line, list, jobs);
         if (result == 0) {
+            endAll(list,jobs);
             return result;
         }
         //EXECUTE COMMAND
     } while (1 == 1);
 
+    endAll(list,jobs);
     return 0;
 }
 
@@ -302,7 +311,6 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     //break;
                 } else {
                     tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
-
                     tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));
                     strcpy(tempArgs[i], token);
                     token = strtok(NULL, " ");
@@ -340,7 +348,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
         }
         //vvvvv LINE != NULL vvvvvv
     }
-
+    
     return 1;
 }
 
@@ -660,9 +668,71 @@ void listRemove(struct NodeList *list, int pid) {
                 previous->next = curr->next;
             }
             list->size = list->size - 1;
+            //Free job
+            jobDelete(curr->job);
+            //Free node
+            free(curr);
             break;
         }
         previous = curr;
         curr = curr->next;
     }
 }
+
+void clearList(struct NodeList *list){
+    struct Node *tempNode;
+    struct Node *delNode;
+    
+    tempNode = list->head;
+    while(tempNode != NULL){
+        delNode = tempNode;
+        tempNode = tempNode->next;
+        //Free Job
+        jobDelete(delNode->job);
+        //Free Node
+        free(delNode);
+    }
+    //Free NodeList
+    free(list);
+}
+
+
+void jobDelete(struct job_t *job){
+    //Free every pointer in argv
+    int i;
+    for(i=0;i<job->argc;i++){
+        free(job->argv[i]);
+    }
+    //Free pointer to argv
+    free(job->argv);
+    free(job->full_command);
+    free(job->binary);
+    free(job);
+}
+
+void clearJobs(struct NodeList *list){
+    //Job has already been deleted but the pointer has not
+    struct Node *tempNode;
+    struct Node *delNode;
+    
+    tempNode = list->head;
+    while(tempNode != NULL){
+        delNode = tempNode;
+        tempNode = tempNode->next;
+        free(delNode);
+    }
+    //Free NodeList
+    free(list);
+}
+
+void endAll(struct NodeList *list, struct NodeList *jobs){
+    printOut();
+    clearList(list);
+    clearJobs(jobs);
+}
+
+
+
+
+
+

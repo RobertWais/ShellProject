@@ -197,7 +197,10 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
 
     while (token != NULL) {
         redirect = 0;
-        if (strcmp(token, "exit") == 0) {
+        if(strcmp(token, ";") == 0){
+            //SKip everyting
+             token = strtok(NULL, " ");
+        }else if (strcmp(token, "exit") == 0) {
             //wait for background processes
             builtin_wait(jobs);
             total_history++;
@@ -237,7 +240,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
             //Alloc for history
 
             token = strtok(NULL, " ");
-            if (token == NULL) {
+            if (token == NULL || strcmp(token, ";")==0) {
                 //ALLOCATE FOR HISTORY - Recent
                 char **tempArgs = (char **) malloc(sizeof(char *) * 2);
                 tempArgs[0] = (char *) malloc(sizeof(char) * (strlen("fg") + 1));
@@ -265,7 +268,6 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                 struct job_t *job = jobCreate(line, 2, tempArgs, background, tempArgs[0]);
                 listAdd(list, job);
                 total_history++;
-                //
 
                 builtin_fg(atoi(token), jobs);
                 token = strtok(NULL, " ");
@@ -278,7 +280,7 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
             int i = 0;
             char **tempArgs = (char **) malloc(sizeof(char *) * 1);
             while (token != NULL) {
-                //REALLOC'
+                //REALLOC
                 if (strcmp(token, ";") == 0) {
                     //SPLIT
                     token = strtok(NULL, " ");
@@ -308,7 +310,6 @@ int parseLine(char *token, char *line, struct NodeList *list, struct NodeList *j
                     strcpy(tempArgs[2], token);
                     token = strtok(NULL, " ");
                     redirect = 1;
-                    //break;
                 } else {
                     tempArgs = realloc(tempArgs, (sizeof(char *) * (i + 2)));
                     tempArgs[i] = (char *) malloc(sizeof(char) * (strlen(token) + 1));

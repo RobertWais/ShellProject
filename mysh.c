@@ -594,8 +594,6 @@ void listHistory(struct NodeList *list) {
     }
     int count = 1;
     while (curr != NULL) {
-        /*TODO: check what is happening with printing jobs
-        printf("%d %s\n",count, jobBinary(curr->job)); */
         int i;
         printf("%d ", count);
         for (i = 0; i < curr->job->argc - 1; i++) {

@@ -3,6 +3,6 @@
 int main(int agrc, char *argv[]){
 
 
-printf("HELL\n");
+printf("hello\n");
 return 0;
 }
